@@ -15,7 +15,7 @@ predictions are converted to AIF360 `aifData` and scored with metrics.common_uti
 (MAF2024_guide format); the three project targets (accuracy, DEO, policy drop) are
 printed as well.
 
-Label convention of the original project (train.py): 0 = Pneumothorax, 1 = No Finding;
+Label convention of the original project (train.py): 0 = Pneumothorax, 1 = pneumothorax-negative (other findings allowed);
 DEO = |TPR_F - TPR_M| on label 1. favorable label = 1, protected = sex (1 = M, 0 = F).
 
 Run
@@ -68,7 +68,7 @@ class aifData(StandardDataset):
 
 class Subgroup_Balanced_Resampling:
     def __init__(self, backbone: str = 'raddino', seed: int = 42,
-                 ckpt_dir: str = None, save_dir: str = None) -> None:
+                 ckpt_dir: str = None, save_dir: str = None, save_every: int = 0) -> None:
         self.backbone = backbone
         self.seed = seed
         self.args = target_push.build_argparser().parse_args([])
@@ -76,6 +76,7 @@ class Subgroup_Balanced_Resampling:
         self.args.seed = seed
         self.args.ckpt_dir = ckpt_dir      # evaluate trained checkpoints only (no training)
         self.args.save_dir = save_dir      # save checkpoints after training
+        self.args.save_every = save_every  # also save save_dir/epNN/ every N epochs
         for k, v in RECIPES[backbone].items():
             setattr(self.args, k, v)
         self.privileged_groups = [{'sex': 1}]
@@ -115,10 +116,13 @@ if __name__ == "__main__":
     ap.add_argument('--ckpt_dir', default=None,
                     help='evaluate trained checkpoints (fair.pt, nofair.pt) only, no training')
     ap.add_argument('--save_dir', default=None, help='save fair.pt / nofair.pt after training')
+    ap.add_argument('--save_every', type=int, default=0,
+                    help='with --save_dir: also save SAVE_DIR/epNN/{fair,nofair}.pt every N epochs')
     a = ap.parse_args()
 
     clf = Subgroup_Balanced_Resampling(backbone=a.backbone, seed=a.seed,
-                                       ckpt_dir=a.ckpt_dir, save_dir=a.save_dir)
+                                       ckpt_dir=a.ckpt_dir, save_dir=a.save_dir,
+                                       save_every=a.save_every)
     m_orig, m_transf = clf.run()
     keys = ["accuracy", "Balanced accuracy", "true_positive_rate",
             "equal_opportunity_difference", "average_abs_odds_difference"]

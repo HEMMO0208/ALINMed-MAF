@@ -131,20 +131,21 @@ public class Fill {
     }
 
     // ================================================================== 내용
-    static final String NIH = "[입력: NIH 영상 경로]";
-    static final String REPO = "[입력: 코드 경로]/ALINMed-MAF";
-    static final String ENV = "[입력: 가상환경 이름]";
-    static final String CKPT = "[입력: 체크포인트 경로]";
-    static final String CK_FAIR = "[입력: fair.pt SHA-256]";
-    static final String CK_NOFAIR = "[입력: nofair.pt SHA-256]";
-    static final String CK_SIZE = "[입력] MB × 2";
-    static final String RUN_MIN = "[입력]";        // 평가 1회 소요 시간(분)
+    static final String NIH = "/home/hyeonmokang/aidep/data/nih-chest-xrays/versions/3";
+    static final String REPO = "/home/hyeonmokang/aidep/ALINMed-MAF";
+    static final String ENV = "alinmed";
+    static final String ENV_PATH = "/home/hyeonmokang/aidep/envs/alinmed";
+    static final String CKPT = "/home/hyeonmokang/aidep/checkpoints/alinmed_s42";
+    static final String CK_FAIR = "e8a0b196de29b6db6fa89df542ec2d831cd29f2e2a82b62f8921cc95425b7143";
+    static final String CK_NOFAIR = "8bbc7c46af651fa35fadfeabef5167372cbfd072234c2ee9104a367c9e4fcb78";
+    static final String CK_SIZE = "331 MB × 2";
+    static final String RUN_MIN = "1";        // 평가 1회 소요 시간(분)
 
     static String[][] ITEMS = {
         {"[의료] 흉부 X선 기흉 진단 AI 예측정확도",
          "- 시험용 PC에서 Visual Studio Code를 이용하여 시험용 서버에 접속한 후, 시험 데이터셋(테스트 영상 438장)에 대하여 사전에 학습이 완료된 ALINMed V1.0(그룹 균형 리샘플링 적용 모델)으로 기흉 분류를 수행한 결과와 정답 라벨을 비교하여 화면에 출력된 예측정확도(accuracy(fair)) 값이 94 % 이상인지 확인",
          " * 예측정확도 산출식: 예측정확도(%) = (정답과 일치한 영상 수 / 전체 테스트 영상 수 438) × 100" +
-         "|- 예측값: 원본 영상과 좌우 반전 영상의 출력 로짓을 더한 뒤 큰 쪽 클래스(기흉/정상)를 선택" +
+         "|- 예측값: 원본 영상과 좌우 반전 영상의 출력 로짓을 더한 뒤 큰 쪽 클래스(기흉 양성/기흉 음성)를 선택" +
          "|- 대상 모델: 그룹 균형 리샘플링 적용 모델 (fair.pt)",
          "6. 화면에 출력된 accuracy(fair) 값을 확인 후, 예측정확도가 94 % 이상인지 확인",
          "예측정확도 94 % 이상",
@@ -152,9 +153,9 @@ public class Fill {
         {"[의료] 흉부 X선 기흉 진단 AI 공정성(성별 간 DEO)",
          "- 시험용 PC에서 Visual Studio Code를 이용하여 시험용 서버에 접속한 후, 시험 데이터셋(테스트 영상 438장)에 대하여 사전에 학습이 완료된 ALINMed V1.0(그룹 균형 리샘플링 적용 모델)으로 기흉 분류를 수행한 결과로 여성·남성 집단의 진양성률(TPR) 차이를 산출하여 화면에 출력된 DEO(fair) 값이 5 % 이하인지 확인",
          " * DEO(Difference of Equal Opportunity) 산출식: DEO(%) = | TPR_여 − TPR_남 | × 100" +
-         "|- TPR_g = (성별 g의 정상(No Finding, label 1) 영상 중 정상으로 예측된 영상 수) / (성별 g의 정상 영상 수)" +
-         "|- 원 과제 평가 코드(evaluate_DEO)의 정의를 그대로 따르며, TPR은 label 1(정상) 클래스 기준" +
-         "|- 테스트 정상 영상 수: 여 149장, 남 259장 / 대상 모델: 그룹 균형 리샘플링 적용 모델 (fair.pt)",
+         "|- TPR_g = (성별 g의 기흉 음성(label 1) 영상 중 기흉 음성으로 예측된 영상 수) / (성별 g의 기흉 음성 영상 수)" +
+         "|- 원 과제 평가 코드(evaluate_DEO)의 정의를 그대로 따르며, TPR은 label 1(기흉 음성: 기흉 소견 없음, 타 소견 포함 가능) 클래스 기준" +
+         "|- 테스트 기흉 음성 영상 수: 여 149장, 남 259장 / 대상 모델: 그룹 균형 리샘플링 적용 모델 (fair.pt)",
          "6. 화면에 출력된 DEO(fair) 값(같은 줄에 TPR_f, TPR_m 함께 출력)을 확인 후, 5 % 이하인지 확인",
          "성별 간 DEO 5 % 이하",
          "1) 시험결과 표기 단위 : % (소수점 둘째 자리, 예: 0.40 %)|2) 적합성 진술 : 측정불확도 무관. 산출값이 5.00 % 이하이면 적합, 초과하면 부적합"},
@@ -178,7 +179,10 @@ public class Fill {
         // ---- 시험조건
         ParagraphListInterface cond = C(t, 5, 1);
         ControlTable net = (ControlTable) cond.getParagraph(1).getControlList().get(0);
-        for (int r = 1; r <= 2; r++) for (int c = 1; c <= 3; c++) cellLines(net, r, c, "[입력]");
+        String[][] netv = {
+            {"143.248.230.94", "255.255.255.0", "143.248.230.1"},
+            {"172.168.44.158", "255.255.248.0", "172.168.40.2"}};
+        for (int r = 1; r <= 2; r++) for (int c = 1; c <= 3; c++) cellLines(net, r, c, netv[r - 1][c - 1], "(시험장 당일 기재)");
         setText(cond.getParagraph(2), "시험 데이터 셋은 시험용 서버의 “" + NIH + "/images_001 ~ images_012/images/”(영상 4,376장)와 “" + REPO + "/performance_targets/data/”(라벨 CSV 2개)에, 학습 완료 모델은 “" + CKPT + "/”에 저장되어 있으며, Hash 값은 아래와 같음.");
         Paragraph src = cond.getParagraph(3);
         setText(src, "시험 데이터 셋 출처: NIH Clinical Center (NIH ChestX-ray14), Google Health (Four-Findings 전문가 판독 라벨)");
@@ -207,7 +211,7 @@ public class Fill {
         cellLines(data, 1, 2, "1.7 GB");
         cellLines(data, 1, 3, "png");
         cellLines(data, 2, 0, "학습 완료 모델");
-        cellLines(data, 2, 1, CKPT.replace("[입력: 체크포인트 경로]", "[입력: 체크포인트 폴더]"));
+        cellLines(data, 2, 1, CKPT);
         cellLines(data, 2, 2, CK_SIZE);
         cellLines(data, 2, 3, "pt (PyTorch state_dict)");
         Paragraph c45 = plain(cond.getParagraph(6));
@@ -216,25 +220,25 @@ public class Fill {
                 "사전에 의뢰기관에서 AI 모델 학습을 완료한 상태 (그룹 균형 리샘플링 적용 모델 fair.pt / 미적용 모델 nofair.pt, rad-DINO 백본, 15 epoch, 학습 시드 42)",
                 "사전에 의뢰기관이 시험 데이터를 AI 모델 학습에 사용하지 않은 것을 전제로 함 (4,376장을 고정 분할 train_test_split(test_size=0.10, random_state=42)로 학습 3,938장 / 테스트 438장으로 나누고, 테스트 438장(기흉 30장: 여 16 / 남 14)만 시험에 사용)",
                 "rad-DINO 모델 구성 파일(microsoft/rad-dino, revision 110cbc18)은 시험용 서버의 Hugging Face 캐시에 사전 저장된 상태",
-                "AI 모델 시험은 사전에 의뢰기관에서 구축해놓은 conda 가상환경 ‘" + ENV + "’에서 실행"})
+                "AI 모델 시험은 사전에 의뢰기관에서 구축해놓은 Python 가상환경(venv) ‘" + ENV + "’(" + ENV_PATH + ")에서 실행"})
             cond.insertParagraph(cond.getParagraphCount(), withText(c45, s));
 
         // ---- 시험방법 ([첨부2] 예시처럼 단계별)
         ParagraphListInterface m = C(t, 6, 1);
         Paragraph access = tpl.get("access").clone();
         ControlTable at = (ControlTable) access.getControlList().get(0);
-        cellLines(at, 1, 1, "[입력]"); cellLines(at, 2, 1, "[입력]"); cellLines(at, 3, 1, "[시험 당일 제공]");
+        cellLines(at, 1, 1, "143.248.230.94"); cellLines(at, 2, 1, "hyeonmokang"); cellLines(at, 3, 0, "인증"); cellLines(at, 3, 1, "SSH 키 인증 (비밀번호 사용 안 함, 공개키는 시험 당일 서버에 등록)");
         List<Paragraph> out = new ArrayList<>();
         out.add(withText(tpl.get("n"), "시험용 PC에서 Visual Studio Code를 실행하고, Remote-SSH(‘Connect to Host’)로 아래의 접속 정보를 이용하여 시험용 서버에 원격 접속"));
         out.add(access);
-        out.add(withText(tpl.get("n"), "Visual Studio Code의 터미널에서 아래 명령어를 입력하여 conda 가상환경 ‘" + ENV + "’을 활성화하고 코드 경로로 이동"));
-        out.add(box(tpl.get("code"), "conda activate " + ENV, "cd " + REPO));
+        out.add(withText(tpl.get("n"), "Visual Studio Code의 터미널에서 아래 명령어를 입력하여 Python 가상환경 ‘" + ENV + "’을 활성화하고 코드 경로로 이동"));
+        out.add(box(tpl.get("code"), "source " + ENV_PATH + "/bin/activate", "cd " + REPO));
         out.add(withText(tpl.get("n"), "아래 명령어를 입력하여 시험 데이터 셋과 학습 완료 모델이 저장 경로에 존재하는지 확인하고, 출력된 SHA-256 값이 ‘시험조건’의 Hash 표와 일치하는지 확인 (마지막 줄에 ‘ALL 4376 IMAGES OK’가 출력되면 영상 4,376장의 Hash 값이 모두 일치)"));
         out.add(box(tpl.get("code"), "ls " + NIH + " " + CKPT,
                 "sha256sum performance_targets/data/*.csv nih_subset_sha256.txt " + CKPT + "/fair.pt " + CKPT + "/nofair.pt",
                 "(cd " + NIH + " && sha256sum -c --quiet $OLDPWD/nih_subset_sha256.txt) && echo \"ALL 4376 IMAGES OK\""));
         out.add(withText(tpl.get("n"), "아래 명령어를 입력하여 시험 데이터 셋(테스트 영상 438장)에 대하여 학습 완료 모델 2개(fair.pt, nofair.pt)로 기흉 분류를 수행 (학습 없이 평가만 수행, 약 " + RUN_MIN + "분 소요)"));
-        out.add(box(tpl.get("code"), "NIH_ROOT=" + NIH + " HF_HUB_OFFLINE=1 python algorithms/preprocessing/SubgroupBalancedResampling.py --backbone raddino --ckpt_dir " + CKPT + " 2>&1 | tee test_run.log"));
+        out.add(box(tpl.get("code"), "CUDA_VISIBLE_DEVICES=5 NIH_ROOT=" + NIH + " HF_HUB_OFFLINE=1 python algorithms/preprocessing/SubgroupBalancedResampling.py --backbone raddino --ckpt_dir " + CKPT + " 2>&1 | tee test_run.log"));
         out.add(withText(tpl.get("t72"), "5. 기흉 분류를 수행하면서 아래 중간 과정과 결과가 화면에 출력되는지 확인"));
         for (String s : new String[]{
                 " - 데이터 분할 결과: [SPLIT] train=3938 test=438 test_pneu_pos=30 (F16/M14)",
@@ -271,7 +275,7 @@ public class Fill {
         ControlTable g = T(s, "p3/c0");
         setLines(C(g, 1, 0),
                 "‘ALINMed V1.0’은 python 기반 SW로, 단일소프트웨어로 구성되어 있다.",
-                "‘ALINMed V1.0’은 시험용 서버(연구실 GPU 서버)에 설치되어 있으며, 필요 조건이 충족된 conda 가상환경에서 실행된다.",
+                "‘ALINMed V1.0’은 시험용 서버(연구실 GPU 서버)에 설치되어 있으며, 필요 조건이 충족된 Python 가상환경(venv)에서 실행된다.",
                 "‘ALINMed V1.0’은 서버 내에 저장된 학습 완료 모델 2개(fair.pt, nofair.pt), 흉부 X선 영상(NIH ChestX-ray14, 4,376장)과 전문가 판독 라벨(CSV 2개)을 입력으로 사용한다.",
                 "‘ALINMed V1.0’은 실행 시 학습 완료 모델 2개(그룹 균형 리샘플링 적용 / 미적용)를 불러와, 학습에 쓰지 않은 테스트 영상 438장으로 평가한다(학습은 수행하지 않음).",
                 "‘ALINMed V1.0’은 시험용 PC에서 SSH(TCP/IP, 22번 포트)로 접속하여 실행 및 출력 결과 확인이 가능하다.");
@@ -312,23 +316,23 @@ public class Fill {
         setText(P(s, "p21/c0/r2c1/p0"), " 시험 1회 실행(학습 완료 모델 2개 평가)에 약 " + RUN_MIN + "분 소요 (RTX 2080 Ti 1장 기준)");
         setText(P(s, "p23"), "  5.1 시험용 서버 (ALINMed V1.0)");
         ControlTable sv = T(s, "p24/c0");
-        cellLines(sv, 1, 1, "[입력: CPU 모델명]", "GPU: NVIDIA GeForce RTX 2080 Ti 11 GB × 1 (드라이버 [입력])");
-        cellLines(sv, 2, 1, "[입력] GB");
-        cellLines(sv, 3, 1, "[입력] TB");
-        cellLines(sv, 4, 1, "[입력: NIC 이름], 10/100/1000 BASE-T Ethernet, 1 Port");
-        cellLines(sv, 5, 1, "[입력: Ubuntu 버전]");
+        cellLines(sv, 1, 1, "Intel Xeon Silver 4214 @ 2.20GHz × 2 (총 24코어 / 48스레드)", "GPU: NVIDIA GeForce RTX 2080 Ti 11 GB × 1 (시험에 1장 사용, 드라이버 525.147.05)");
+        cellLines(sv, 2, 1, "128 GB");
+        cellLines(sv, 3, 1, "1 TB");
+        cellLines(sv, 4, 1, "Intel I350 Gigabit Network Connection, 10/100/1000 BASE-T Ethernet, 1 Port");
+        cellLines(sv, 5, 1, "Ubuntu 22.04.4 LTS (커널 5.15.0-101-generic)");
         cellLines(sv, 6, 1, "python v3.10", "CUDA v12.1", "torch v2.3.0+cu121", "torchvision v0.18.0+cu121",
                 "transformers v4.44.2", "scikit-learn v1.7.2", "numpy v2.2.6", "pandas v2.3.3", "aif360 v0.6.1",
                 "Pillow v12.3.0", "tqdm v4.67.3", "requests v2.25.1",
                 "사전학습 모델: microsoft/rad-dino (revision 110cbc18d5133582e320b43d53bf5c44e410c936)",
-                "[입력: 서버 가상환경의 pip list 전체]");
+                "[가상환경 전체 패키지 목록 (uv pip freeze)]", "aif360==0.6.1", "certifi==2026.10.23", "chardet==4.0.0", "cloudpickle==3.1.2", "contourpy==1.3.2", "cycler==0.12.1", "filelock==4.1.0", "fonttools==4.65.0", "fsspec==2026.9.0", "hf-xet==1.8.0", "huggingface-hub==0.36.2", "idna==2.10", "jinja2==3.1.6", "joblib==1.6.0", "kiwisolver==1.5.1", "markupsafe==3.0.4", "matplotlib==3.10.9", "mpmath==1.3.0", "networkx==3.4.2", "numpy==2.2.6", "nvidia-cublas-cu12==12.1.3.1", "nvidia-cuda-cupti-cu12==12.1.105", "nvidia-cuda-nvrtc-cu12==12.1.105", "nvidia-cuda-runtime-cu12==12.1.105", "nvidia-cudnn-cu12==8.9.2.26", "nvidia-cufft-cu12==11.0.2.54", "nvidia-curand-cu12==10.3.2.106", "nvidia-cusolver-cu12==11.4.5.107", "nvidia-cusparse-cu12==12.1.0.106", "nvidia-nccl-cu12==2.20.5", "nvidia-nvjitlink-cu12==12.9.86", "nvidia-nvtx-cu12==12.1.105", "packaging==26.3", "pandas==2.3.3", "pillow==12.3.0", "pyparsing==3.3.3", "python-dateutil==3.0.0", "pytz==2026.6", "pyyaml==6.0.3", "regex==2026.9.29", "requests==2.25.1", "safetensors==0.8.0", "scikit-learn==1.7.2", "scipy==1.15.3", "six==1.17.0", "sympy==1.14.0", "threadpoolctl==3.8.0", "tokenizers==0.19.1", "torch==2.3.0+cu121", "torchvision==0.18.0+cu121", "tqdm==4.67.3", "transformers==4.44.2", "triton==2.3.0", "typing-extensions==4.16.0", "tzdata==2026.6", "urllib3==1.26.20");
         ControlTable pc = T(s, "p27/c0");
-        cellLines(pc, 1, 1, "[입력: 노트북 CPU]");
-        cellLines(pc, 2, 1, "[입력] GB");
-        cellLines(pc, 3, 1, "[입력] GB");
-        cellLines(pc, 4, 1, "[입력: 무선/유선 NIC]");
-        cellLines(pc, 5, 1, "[입력: OS 버전]");
-        cellLines(pc, 6, 1, "Visual Studio Code [입력: 버전]", "Remote - SSH 확장 [입력: 버전]");
+        cellLines(pc, 1, 1, "Apple M4 Pro (14코어: 성능 10 + 효율 4), MacBook Pro (Mac16,7)");
+        cellLines(pc, 2, 1, "24 GB");
+        cellLines(pc, 3, 1, "500 GB (SSD)");
+        cellLines(pc, 4, 1, "내장 무선 NIC, Wi-Fi 802.11 a/b/g/n/ac/ax");
+        cellLines(pc, 5, 1, "macOS 26.5.1 (빌드 25F80)");
+        cellLines(pc, 6, 1, "Visual Studio Code 1.139.0", "Remote - SSH 확장 0.128.0");
         Paragraph h52 = P(s, "p26");
         Paragraph mobile = withText(h52, "  5.2 모바일 단말기 : 해당 없음");
         setText(h52, "  5.3 시험용 PC");

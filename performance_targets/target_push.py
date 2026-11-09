@@ -17,8 +17,8 @@ training recipe configurable so the orchestrator can escalate across rounds:
 
 REPLICATION NOTES (must match train.py for report parity):
   * Data      : merge test+validation Four-Findings CSVs -> 4,376 rows (all on disk).
-  * Label     : Pneumothorax==YES -> 0, else -> 1  (so label 1 == "No Finding",
-                the MAJORITY class; pneumothorax positives are the rare label-0 cases).
+  * Label     : Pneumothorax==YES -> 0, else -> 1  (so label 1 == pneumothorax-negative
+                (other findings allowed), the MAJORITY class; pneumothorax positives are the rare label-0 cases).
   * Gender    : M -> +1, F -> -1  (from "Patient Gender").
   * Split     : IMAGE-LEVEL train_test_split(indices, test_size=0.10,
                 random_state=42, shuffle=True)  -> train 3938 / test 438.
@@ -128,7 +128,7 @@ class CleanChestDataset(Dataset):
             lab = Counter(s[1] for s in self.samples)
             gen = Counter(s[2] for s in self.samples)
             print(f"[Dataset] n={len(self.samples)} dropped_missing={missing} | "
-                  f"label pneu(0)={lab[0]} nofind(1)={lab[1]} | "
+                  f"label pneu(0)={lab[0]} pneu_neg(1)={lab[1]} | "
                   f"gender M(+1)={gen[1]} F(-1)={gen[-1]}")
 
     def __len__(self):
@@ -374,6 +374,13 @@ def train_variant(rows, train_idx, test_idx, args, use_fairness, device):
         acc, deo, tf, tm = evaluate_DEO(model, test_loader, device, is_tf, tta=args.tta)
         print(f"[{tag}] ep{epoch+1}/{args.epochs} loss={run_loss/max(seen,1):.4f} "
               f"acc={acc:.4f} DEO={deo:.4f} (TPR_f={tf:.3f} TPR_m={tm:.3f})")
+        every = getattr(args, "save_every", 0) or 0
+        if getattr(args, "save_dir", None) and every > 0 and (epoch + 1) % every == 0:
+            ep_dir = os.path.join(args.save_dir, f"ep{epoch+1:02d}")
+            os.makedirs(ep_dir, exist_ok=True)
+            path = os.path.join(ep_dir, CKPT_NAMES[use_fairness])
+            torch.save(model.state_dict(), path)
+            print(f"[{tag}] saved epoch checkpoint {path} sha256={sha256_file(path)}")
 
     acc, deo, tf, tm, preds = evaluate_DEO(model, test_loader, device, is_tf, tta=args.tta,
                                            return_preds=True)
@@ -457,8 +464,8 @@ def run_smoke(args, device):
     print(f"[SPLIT] TEST pneumothorax-positives={te_c['pos']}  "
           f"F={te_c['pos_F']} M={te_c['pos_M']}  (expect ~30, F16/M14)")
     print(f"[SPLIT] TEST gender all: F={te_c['F']} M={te_c['M']}  "
-          f"| No-Finding(label1)={te_c['nofind']}")
-    print(f"[NOTE] train.py's evaluate_DEO computes TPR on label==1 (No-Finding, "
+          f"| Pneu-negative(label1)={te_c['nofind']}")
+    print(f"[NOTE] train.py's evaluate_DEO computes TPR on label==1 (pneumothorax-negative, "
           f"the majority); DEO=|TPR_f-TPR_m|. Replicated verbatim.")
 
     for bb in ["resnet18", "raddino"]:
@@ -623,6 +630,8 @@ def build_argparser():
     p.add_argument("--smoke", action="store_true", help="build+1-batch checks, no training")
     p.add_argument("--save_dir", default=None,
                    help="after training, save fair.pt / nofair.pt (model state_dict) here")
+    p.add_argument("--save_every", type=int, default=0,
+                   help="with --save_dir: also save SAVE_DIR/epNN/{fair,nofair}.pt every N epochs")
     p.add_argument("--ckpt_dir", default=None,
                    help="evaluation only: load fair.pt / nofair.pt from here, skip training")
     return p
