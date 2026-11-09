@@ -64,6 +64,7 @@ ROUND_ID = 40
 IMAGENET_MEAN = [0.485, 0.456, 0.406]
 IMAGENET_STD = [0.229, 0.224, 0.225]
 RADDINO_HF = "microsoft/rad-dino"
+RADDINO_REV = "110cbc18d5133582e320b43d53bf5c44e410c936"   # pinned revision
 
 # reporting targets
 TARGET_ACC = 94.0     # percent
@@ -185,7 +186,7 @@ class RadDinoClassifier(nn.Module):
     def __init__(self, num_classes=2, hf_name=RADDINO_HF):
         super().__init__()
         from transformers import AutoModel
-        self.backbone = AutoModel.from_pretrained(hf_name)
+        self.backbone = AutoModel.from_pretrained(hf_name, revision=RADDINO_REV)
         h = self.backbone.config.hidden_size
         self.head = nn.Linear(h, num_classes)
 
@@ -239,7 +240,7 @@ def build_model(backbone, device):
         mean, std = IMAGENET_MEAN, IMAGENET_STD
         try:
             from transformers import AutoImageProcessor
-            proc = AutoImageProcessor.from_pretrained(RADDINO_HF)
+            proc = AutoImageProcessor.from_pretrained(RADDINO_HF, revision=RADDINO_REV)
             mean = list(proc.image_mean)
             std = list(proc.image_std)
         except Exception as e:
@@ -377,6 +378,42 @@ def train_variant(rows, train_idx, test_idx, args, use_fairness, device):
     acc, deo, tf, tm, preds = evaluate_DEO(model, test_loader, device, is_tf, tta=args.tta,
                                            return_preds=True)
     print(f"[{tag}] FINAL acc={acc:.4f} DEO={deo:.4f} TPR_f={tf:.3f} TPR_m={tm:.3f}")
+    if getattr(args, "save_dir", None):
+        os.makedirs(args.save_dir, exist_ok=True)
+        path = os.path.join(args.save_dir, CKPT_NAMES[use_fairness])
+        torch.save(model.state_dict(), path)
+        print(f"[{tag}] saved checkpoint {path} sha256={sha256_file(path)}")
+    return {"acc": acc, "deo": deo, "tpr_f": tf, "tpr_m": tm, "_preds": preds}
+
+
+CKPT_NAMES = {True: "fair.pt", False: "nofair.pt"}
+
+
+def sha256_file(path):
+    import hashlib
+    h = hashlib.sha256()
+    with open(path, "rb") as f:
+        for chunk in iter(lambda: f.read(1 << 20), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def eval_variant(rows, test_idx, args, use_fairness, device):
+    """Load a trained checkpoint (args.ckpt_dir/{fair,nofair}.pt) and evaluate on the test split only."""
+    tag = "FAIR" if use_fairness else "NOFAIR"
+    path = os.path.join(args.ckpt_dir, CKPT_NAMES[use_fairness])
+    print(f"[{tag}] load checkpoint {path} sha256={sha256_file(path)}")
+    model, is_tf, mean, std, note = build_model(args.backbone, device)
+    if note:
+        print(f"[{tag}] NOTE: {note}")
+    model.load_state_dict(torch.load(path, map_location=device))
+    _, test_tf = build_transforms(args.aug, mean, std)
+    test_ds = CleanChestDataset(rows, transform=test_tf, indices=test_idx, verbose=False)
+    test_loader = DataLoader(test_ds, batch_size=args.batch_size, shuffle=False,
+                             num_workers=args.num_workers)
+    acc, deo, tf, tm, preds = evaluate_DEO(model, test_loader, device, is_tf, tta=args.tta,
+                                           return_preds=True)
+    print(f"[{tag}] FINAL acc={acc:.4f} DEO={deo:.4f} TPR_f={tf:.3f} TPR_m={tm:.3f}")
     return {"acc": acc, "deo": deo, "tpr_f": tf, "tpr_m": tm, "_preds": preds}
 
 
@@ -482,6 +519,8 @@ def run_full(args, device):
     if args.tta:
         tag += "_tta"
     tag += f"_s{args.seed}"
+    if getattr(args, "ckpt_dir", None):
+        tag += "_ckpteval"
     print("=" * 70)
     print(f"TARGET PUSH full run: {tag}  (seed={args.seed})")
     print("=" * 70)
@@ -490,13 +529,20 @@ def run_full(args, device):
     print(f"[SPLIT] train={len(train_idx)} test={len(test_idx)} "
           f"test_pneu_pos={te_c['pos']} (F{te_c['pos_F']}/M{te_c['pos_M']})")
 
-    print("\n----- MODEL B (WITH FAIRNESS: WeightedRandomSampler) -----")
-    seed_everything(args.seed)
-    fair = train_variant(rows, train_idx, test_idx, args, use_fairness=True, device=device)
+    if getattr(args, "ckpt_dir", None):
+        print("\n----- EVAL ONLY: trained checkpoints, no training -----")
+        print("\n----- MODEL B (WITH FAIRNESS: WeightedRandomSampler) -----")
+        fair = eval_variant(rows, test_idx, args, use_fairness=True, device=device)
+        print("\n----- MODEL A (NO FAIRNESS: standard shuffle) -----")
+        nofair = eval_variant(rows, test_idx, args, use_fairness=False, device=device)
+    else:
+        print("\n----- MODEL B (WITH FAIRNESS: WeightedRandomSampler) -----")
+        seed_everything(args.seed)
+        fair = train_variant(rows, train_idx, test_idx, args, use_fairness=True, device=device)
 
-    print("\n----- MODEL A (NO FAIRNESS: standard shuffle) -----")
-    seed_everything(args.seed)
-    nofair = train_variant(rows, train_idx, test_idx, args, use_fairness=False, device=device)
+        print("\n----- MODEL A (NO FAIRNESS: standard shuffle) -----")
+        seed_everything(args.seed)
+        nofair = train_variant(rows, train_idx, test_idx, args, use_fairness=False, device=device)
 
     acc_fair, acc_nofair = fair["acc"], nofair["acc"]
     deo_fair_pct = fair["deo"] * 100.0
@@ -575,6 +621,10 @@ def build_argparser():
     p.add_argument("--batch_size", type=int, default=16)
     p.add_argument("--num_workers", type=int, default=4)
     p.add_argument("--smoke", action="store_true", help="build+1-batch checks, no training")
+    p.add_argument("--save_dir", default=None,
+                   help="after training, save fair.pt / nofair.pt (model state_dict) here")
+    p.add_argument("--ckpt_dir", default=None,
+                   help="evaluation only: load fair.pt / nofair.pt from here, skip training")
     return p
 
 

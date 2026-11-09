@@ -67,12 +67,15 @@ class aifData(StandardDataset):
 
 
 class Subgroup_Balanced_Resampling:
-    def __init__(self, backbone: str = 'raddino', seed: int = 42) -> None:
+    def __init__(self, backbone: str = 'raddino', seed: int = 42,
+                 ckpt_dir: str = None, save_dir: str = None) -> None:
         self.backbone = backbone
         self.seed = seed
         self.args = target_push.build_argparser().parse_args([])
         self.args.backbone = backbone
         self.args.seed = seed
+        self.args.ckpt_dir = ckpt_dir      # evaluate trained checkpoints only (no training)
+        self.args.save_dir = save_dir      # save checkpoints after training
         for k, v in RECIPES[backbone].items():
             setattr(self.args, k, v)
         self.privileged_groups = [{'sex': 1}]
@@ -109,9 +112,13 @@ if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument('--backbone', default='raddino', choices=list(RECIPES))
     ap.add_argument('--seed', type=int, default=42)
+    ap.add_argument('--ckpt_dir', default=None,
+                    help='evaluate trained checkpoints (fair.pt, nofair.pt) only, no training')
+    ap.add_argument('--save_dir', default=None, help='save fair.pt / nofair.pt after training')
     a = ap.parse_args()
 
-    clf = Subgroup_Balanced_Resampling(backbone=a.backbone, seed=a.seed)
+    clf = Subgroup_Balanced_Resampling(backbone=a.backbone, seed=a.seed,
+                                       ckpt_dir=a.ckpt_dir, save_dir=a.save_dir)
     m_orig, m_transf = clf.run()
     keys = ["accuracy", "Balanced accuracy", "true_positive_rate",
             "equal_opportunity_difference", "average_abs_odds_difference"]
