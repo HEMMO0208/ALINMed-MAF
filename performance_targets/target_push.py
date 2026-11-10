@@ -613,6 +613,68 @@ def run_full(args, device):
     return out
 
 
+ITEMS = ("accuracy", "deo", "drop")
+
+
+def run_item(args, device):
+    """Evaluate ONE certification test item from trained checkpoints (args.ckpt_dir).
+    accuracy / deo use fair.pt only; drop uses fair.pt and nofair.pt."""
+    item = args.item
+    print("=" * 70)
+    print(f"TEST ITEM: {item}  (checkpoints: {args.ckpt_dir}, evaluation only)")
+    print("=" * 70)
+    rows, full, train_idx, test_idx = prepare_split(verbose=True)
+    te_c = split_composition(full, test_idx)
+    print(f"[SPLIT] train={len(train_idx)} test={len(test_idx)} "
+          f"test_pneu_pos={te_c['pos']} (F{te_c['pos_F']}/M{te_c['pos_M']})")
+
+    fair = eval_variant(rows, test_idx, args, use_fairness=True, device=device)
+    preds, labels, gender = fair.pop("_preds")
+    out = {"item": item, "ckpt_dir": args.ckpt_dir, "fair": fair}
+    if item == "drop":
+        nofair = eval_variant(rows, test_idx, args, use_fairness=False, device=device)
+        nofair.pop("_preds")
+        out["nofair"] = nofair
+
+    print("\n" + "=" * 70)
+    if item == "accuracy":
+        correct, total = int((preds == labels).sum()), len(labels)
+        value = correct / total * 100.0
+        ok = value >= TARGET_ACC
+        print("[ITEM 1] accuracy (fair model)")
+        print(f"  correct / total = {correct} / {total}")
+        print(f"  accuracy = {value:.2f} %   (target >= {TARGET_ACC:g} %)  => {'PASS' if ok else 'FAIL'}")
+        out.update(correct=correct, total=total)
+    elif item == "deo":
+        f1 = (gender == -1) & (labels == 1)
+        m1 = (gender == 1) & (labels == 1)
+        hf, nf = int((preds[f1] == 1).sum()), int(f1.sum())
+        hm, nm = int((preds[m1] == 1).sum()), int(m1.sum())
+        value = abs(hf / nf - hm / nm) * 100.0
+        ok = value <= TARGET_DEO
+        print("[ITEM 2] DEO = |TPR_female - TPR_male| x 100 (fair model, TPR on label 1)")
+        print(f"  TPR_female = {hf} / {nf} = {hf / nf:.4f}")
+        print(f"  TPR_male   = {hm} / {nm} = {hm / nm:.4f}")
+        print(f"  DEO = {value:.2f} %   (target <= {TARGET_DEO:g} %)  => {'PASS' if ok else 'FAIL'}")
+        out.update(tpr_f_hits=hf, tpr_f_n=nf, tpr_m_hits=hm, tpr_m_n=nm)
+    else:
+        a_f, a_n = fair["acc"] * 100.0, nofair["acc"] * 100.0
+        value = (a_n - a_f) / a_n * 100.0
+        ok = value <= TARGET_DROP
+        print("[ITEM 3] policy drop = (acc_nofair - acc_fair) / acc_nofair x 100")
+        print(f"  accuracy(nofair) = {a_n:.2f} %   accuracy(fair) = {a_f:.2f} %")
+        print(f"  policy drop = {value:.2f} %   (target <= {TARGET_DROP:g} %)  => {'PASS' if ok else 'FAIL'}")
+    print("=" * 70)
+
+    out.update(value=value, passed=bool(ok))
+    out_path = os.path.join(HERE, "results", f"test_item_{item}.json")
+    os.makedirs(os.path.dirname(out_path), exist_ok=True)
+    with open(out_path, "w") as f:
+        json.dump(out, f, indent=2, ensure_ascii=False)
+    print(f"[saved] {out_path}")
+    return out
+
+
 # ------------------------------------------------------------------ main
 def build_argparser():
     p = argparse.ArgumentParser(description="Round 40 target-push train/eval.")
@@ -634,6 +696,8 @@ def build_argparser():
                    help="with --save_dir: also save SAVE_DIR/epNN/{fair,nofair}.pt every N epochs")
     p.add_argument("--ckpt_dir", default=None,
                    help="evaluation only: load fair.pt / nofair.pt from here, skip training")
+    p.add_argument("--item", default=None, choices=ITEMS,
+                   help="with --ckpt_dir: evaluate one test item only (accuracy | deo | drop)")
     return p
 
 
@@ -645,6 +709,9 @@ def main():
           f"HF_HUB_OFFLINE={os.environ.get('HF_HUB_OFFLINE')} torch={torch.__version__}")
     if args.smoke:
         run_smoke(args, device)
+    elif args.item:
+        assert args.ckpt_dir, "--item needs --ckpt_dir"
+        run_item(args, device)
     else:
         run_full(args, device)
 

@@ -1,0 +1,111 @@
+[
+ {
+  "old": "SSH 키 인증 (비밀번호 사용 안 함, 공개키는 시험 당일 서버에 등록)",
+  "new": "SSH 키 인증 (시험용 PC의 키 파일 ~/.ssh/hyeonmo_id_ed25519 사용, 비밀번호 사용 안 함)",
+  "count": 3
+ },
+ {
+  "old": "시험용 PC에서 KAIST VPN(Ivanti Secure Access)에 접속한 후, Visual Studio Code를 실행하고 Remote-SSH(‘Connect to Host’)로 아래의 접속 정보를 이용하여 시험용 서버에 원격 접속",
+  "new": "시험용 PC에서 KAIST VPN(Ivanti Secure Access)에 접속한 후, Visual Studio Code를 실행하고 터미널(Terminal → New Terminal)에 아래 명령어를 그대로 입력하여 시험용 서버에 원격 접속",
+  "count": 3
+ },
+ {
+  "anchor": "SSH 키 인증 (시험용 PC의 키 파일 ~/.ssh/hyeonmo_id_ed25519 사용, 비밀번호 사용 안 함)",
+  "template": "CUDA_VISIBLE_DEVICES=5 NIH_ROOT=/home/hyeonmokang/aidep/data/nih-chest-xrays/versions/3 HF_HUB_OFFLINE=1 python algorithms/preprocessing/SubgroupBalancedResampling.py --backbone raddino --ckpt_dir /home/hyeonmokang/aidep/checkpoints/alinmed_s42 2>&1 | tee test_run.log",
+  "text": "ssh -i ~/.ssh/hyeonmo_id_ed25519 hyeonmokang@143.248.230.94",
+  "level": 2,
+  "count": 3
+ },
+ {
+  "old": "아래 명령어를 입력하여 시험 데이터 셋(테스트 영상 438장)에 대하여 학습 완료 모델 2개(fair.pt, nofair.pt)로 기흉 분류를 수행 (학습 없이 평가만 수행, 약 1분 소요)",
+  "new": "아래 명령어를 입력하여 시험 데이터 셋(테스트 영상 438장)에 대하여 학습 완료 모델(fair.pt)로 기흉 분류를 수행하고 예측정확도를 산출 (시험항목 1만 단독 실행, 학습 없이 평가만 수행, 약 1분 소요)"
+ },
+ {
+  "old": "CUDA_VISIBLE_DEVICES=5 NIH_ROOT=/home/hyeonmokang/aidep/data/nih-chest-xrays/versions/3 HF_HUB_OFFLINE=1 python algorithms/preprocessing/SubgroupBalancedResampling.py --backbone raddino --ckpt_dir /home/hyeonmokang/aidep/checkpoints/alinmed_s42 2>&1 | tee test_run.log",
+  "new": "CUDA_VISIBLE_DEVICES=5 NIH_ROOT=/home/hyeonmokang/aidep/data/nih-chest-xrays/versions/3 HF_HUB_OFFLINE=1 python algorithms/preprocessing/SubgroupBalancedResampling.py --backbone raddino --ckpt_dir /home/hyeonmokang/aidep/checkpoints/alinmed_s42 --item accuracy 2>&1 | tee test_item_accuracy.log"
+ },
+ {
+  "old": " - 학습 완료 모델 로딩: [FAIR] load checkpoint …/fair.pt sha256=…, [NOFAIR] load checkpoint …/nofair.pt sha256=… (3단계의 Hash 값과 같은지 확인)",
+  "new": " - 학습 완료 모델 로딩: [FAIR] load checkpoint …/fair.pt sha256=… (3단계의 Hash 값과 같은지 확인)"
+ },
+ {
+  "old": " - 모델별 테스트 결과: [FAIR] FINAL acc=… DEO=…, [NOFAIR] FINAL acc=… DEO=… (소수값으로 개별 출력)",
+  "new": " - 모델 테스트 결과: [FAIR] FINAL acc=… DEO=… (소수값으로 출력)"
+ },
+ {
+  "old": " - 최종 결과: accuracy(fair) / accuracy(nofair), DEO(fair) (TPR_f, TPR_m), policy-drop을 %로 출력하고, TARGET CHECK 줄에 세 지표의 기준 충족 여부(True/False) 출력",
+  "new": " - 최종 결과: [ITEM 1] 줄 아래에 맞힌 영상 수 / 전체 영상 수(correct / total)와 accuracy 값(%)을 출력하고, 같은 줄 끝에 기준 충족 여부(PASS/FAIL) 출력"
+ },
+ {
+  "old": " - 결과 파일: performance_targets/results/target_push_raddino_e15_strong_cw_tta_s42_ckpteval.json, 화면 로그: test_run.log",
+  "new": " - 결과 파일: performance_targets/results/test_item_accuracy.json, 화면 로그: test_item_accuracy.log"
+ },
+ {
+  "old": "아래 명령어를 입력하여 시험 데이터 셋(테스트 영상 438장)에 대하여 학습 완료 모델 2개(fair.pt, nofair.pt)로 기흉 분류를 수행 (학습 없이 평가만 수행, 약 1분 소요)",
+  "new": "아래 명령어를 입력하여 시험 데이터 셋(테스트 영상 438장)에 대하여 학습 완료 모델(fair.pt)로 기흉 분류를 수행하고 공정성(DEO)을 산출 (시험항목 2만 단독 실행, 학습 없이 평가만 수행, 약 1분 소요)"
+ },
+ {
+  "old": "CUDA_VISIBLE_DEVICES=5 NIH_ROOT=/home/hyeonmokang/aidep/data/nih-chest-xrays/versions/3 HF_HUB_OFFLINE=1 python algorithms/preprocessing/SubgroupBalancedResampling.py --backbone raddino --ckpt_dir /home/hyeonmokang/aidep/checkpoints/alinmed_s42 2>&1 | tee test_run.log",
+  "new": "CUDA_VISIBLE_DEVICES=5 NIH_ROOT=/home/hyeonmokang/aidep/data/nih-chest-xrays/versions/3 HF_HUB_OFFLINE=1 python algorithms/preprocessing/SubgroupBalancedResampling.py --backbone raddino --ckpt_dir /home/hyeonmokang/aidep/checkpoints/alinmed_s42 --item deo 2>&1 | tee test_item_deo.log"
+ },
+ {
+  "old": " - 학습 완료 모델 로딩: [FAIR] load checkpoint …/fair.pt sha256=…, [NOFAIR] load checkpoint …/nofair.pt sha256=… (3단계의 Hash 값과 같은지 확인)",
+  "new": " - 학습 완료 모델 로딩: [FAIR] load checkpoint …/fair.pt sha256=… (3단계의 Hash 값과 같은지 확인)"
+ },
+ {
+  "old": " - 모델별 테스트 결과: [FAIR] FINAL acc=… DEO=…, [NOFAIR] FINAL acc=… DEO=… (소수값으로 개별 출력)",
+  "new": " - 모델 테스트 결과: [FAIR] FINAL acc=… DEO=… (소수값으로 출력)"
+ },
+ {
+  "old": " - 최종 결과: accuracy(fair) / accuracy(nofair), DEO(fair) (TPR_f, TPR_m), policy-drop을 %로 출력하고, TARGET CHECK 줄에 세 지표의 기준 충족 여부(True/False) 출력",
+  "new": " - 최종 결과: [ITEM 2] 줄 아래에 성별 TPR(TPR_female, TPR_male: 맞힌 수 / 대상 수)과 DEO 값(%)을 출력하고, 같은 줄 끝에 기준 충족 여부(PASS/FAIL) 출력"
+ },
+ {
+  "old": " - 결과 파일: performance_targets/results/target_push_raddino_e15_strong_cw_tta_s42_ckpteval.json, 화면 로그: test_run.log",
+  "new": " - 결과 파일: performance_targets/results/test_item_deo.json, 화면 로그: test_item_deo.log"
+ },
+ {
+  "old": "아래 명령어를 입력하여 시험 데이터 셋(테스트 영상 438장)에 대하여 학습 완료 모델 2개(fair.pt, nofair.pt)로 기흉 분류를 수행 (학습 없이 평가만 수행, 약 1분 소요)",
+  "new": "아래 명령어를 입력하여 시험 데이터 셋(테스트 영상 438장)에 대하여 학습 완료 모델 2개(fair.pt, nofair.pt)로 기흉 분류를 수행하고 정책반영 성능평균하락률을 산출 (시험항목 3만 단독 실행, 학습 없이 평가만 수행, 약 1분 소요)"
+ },
+ {
+  "old": "CUDA_VISIBLE_DEVICES=5 NIH_ROOT=/home/hyeonmokang/aidep/data/nih-chest-xrays/versions/3 HF_HUB_OFFLINE=1 python algorithms/preprocessing/SubgroupBalancedResampling.py --backbone raddino --ckpt_dir /home/hyeonmokang/aidep/checkpoints/alinmed_s42 2>&1 | tee test_run.log",
+  "new": "CUDA_VISIBLE_DEVICES=5 NIH_ROOT=/home/hyeonmokang/aidep/data/nih-chest-xrays/versions/3 HF_HUB_OFFLINE=1 python algorithms/preprocessing/SubgroupBalancedResampling.py --backbone raddino --ckpt_dir /home/hyeonmokang/aidep/checkpoints/alinmed_s42 --item drop 2>&1 | tee test_item_drop.log"
+ },
+ {
+  "old": " - 최종 결과: accuracy(fair) / accuracy(nofair), DEO(fair) (TPR_f, TPR_m), policy-drop을 %로 출력하고, TARGET CHECK 줄에 세 지표의 기준 충족 여부(True/False) 출력",
+  "new": " - 최종 결과: [ITEM 3] 줄 아래에 accuracy(nofair), accuracy(fair)와 policy drop 값(%)을 출력하고, 같은 줄 끝에 기준 충족 여부(PASS/FAIL) 출력"
+ },
+ {
+  "old": " - 결과 파일: performance_targets/results/target_push_raddino_e15_strong_cw_tta_s42_ckpteval.json, 화면 로그: test_run.log",
+  "new": " - 결과 파일: performance_targets/results/test_item_drop.json, 화면 로그: test_item_drop.log"
+ },
+ {
+  "old": "6. 화면에 출력된 accuracy(fair) 값을 확인 후, 예측정확도가 94 % 이상인지 확인",
+  "new": "6. 화면에 출력된 accuracy 값을 확인 후, 예측정확도가 94 % 이상인지 확인"
+ },
+ {
+  "old": "6. 화면에 출력된 DEO(fair) 값(같은 줄에 TPR_f, TPR_m 함께 출력)을 확인 후, 5 % 이하인지 확인",
+  "new": "6. 화면에 출력된 DEO 값(바로 위 두 줄에 TPR_female, TPR_male 함께 출력)을 확인 후, 5 % 이하인지 확인"
+ },
+ {
+  "old": "6. 화면에 출력된 policy-drop 값을 확인 후, 3 % 이하인지 확인",
+  "new": "6. 화면에 출력된 policy drop 값을 확인 후, 3 % 이하인지 확인"
+ },
+ {
+  "old": "- 예측값: 원본 영상과 좌우 반전 영상의 출력 로짓을 더한 뒤 큰 쪽 클래스(기흉/정상)를 선택",
+  "new": "- 예측값: 원본 영상과 좌우 반전 영상의 출력 로짓을 더한 뒤 큰 쪽 클래스(기흉 양성/기흉 음성)를 선택"
+ },
+ {
+  "old": "- TPR_g = (성별 g의 정상(No Finding, label 1) 영상 중 정상으로 예측된 영상 수) / (성별 g의 정상 영상 수)",
+  "new": "- TPR_g = (성별 g의 기흉 음성(label 1) 영상 중 기흉 음성으로 예측된 영상 수) / (성별 g의 기흉 음성 영상 수)"
+ },
+ {
+  "old": "- 원 과제 평가 코드(evaluate_DEO)의 정의를 그대로 따르며, TPR은 label 1(정상) 클래스 기준",
+  "new": "- 원 과제 평가 코드(evaluate_DEO)의 정의를 그대로 따르며, TPR은 label 1(기흉 음성: 기흉 소견 없음, 타 소견 포함 가능) 클래스 기준"
+ },
+ {
+  "old": "- 테스트 정상 영상 수: 여 149장, 남 259장 / 대상 모델: 그룹 균형 리샘플링 적용 모델 (fair.pt)",
+  "new": "- 테스트 기흉 음성 영상 수: 여 149장, 남 259장 / 대상 모델: 그룹 균형 리샘플링 적용 모델 (fair.pt)"
+ }
+]

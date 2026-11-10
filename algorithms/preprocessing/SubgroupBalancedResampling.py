@@ -118,11 +118,21 @@ if __name__ == "__main__":
     ap.add_argument('--save_dir', default=None, help='save fair.pt / nofair.pt after training')
     ap.add_argument('--save_every', type=int, default=0,
                     help='with --save_dir: also save SAVE_DIR/epNN/{fair,nofair}.pt every N epochs')
+    ap.add_argument('--item', default=None, choices=target_push.ITEMS,
+                    help='with --ckpt_dir: run one test item only (accuracy | deo | drop)')
     a = ap.parse_args()
 
     clf = Subgroup_Balanced_Resampling(backbone=a.backbone, seed=a.seed,
                                        ckpt_dir=a.ckpt_dir, save_dir=a.save_dir,
                                        save_every=a.save_every)
+    if a.item:                                   # 공인시험: 항목별 단독 실행
+        if not a.ckpt_dir:
+            ap.error('--item needs --ckpt_dir')
+        clf.args.item = a.item
+        target_push.seed_everything(a.seed)
+        device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+        target_push.run_item(clf.args, device)
+        sys.exit(0)
     m_orig, m_transf = clf.run()
     keys = ["accuracy", "Balanced accuracy", "true_positive_rate",
             "equal_opportunity_difference", "average_abs_odds_difference"]

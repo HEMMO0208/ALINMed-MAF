@@ -1,0 +1,12 @@
+[
+  {"old": "‘ALINMed V1.0’은 시험용 PC에서 SSH(TCP/IP, 22번 포트)로 접속하여 실행 및 출력 결과 확인이 가능하다.",
+   "new": "‘ALINMed V1.0’은 시험용 PC를 통해 실행 및 출력 결과 확인이 가능하며, 시험용 PC는 KAIST VPN에 접속한 후 TCP/IP 기반 SSH(22번 포트)로 시험용 서버에 원격 접속한다."},
+  {"after": " 시험 1회 실행(학습 완료 모델 2개 평가)에 약 1분 소요 (RTX 2080 Ti 1장 기준)",
+   "add": " 시험장에서 인터넷 및 KAIST VPN(Ivanti Secure Access) 접속이 가능해야 함"},
+  {"after": "Remote - SSH 확장 0.128.0",
+   "add": "Ivanti Secure Access 22.8.6 (KAIST VPN)"},
+  {"old": "(시험장 당일 기재)", "prev": "172.168.44.158",
+   "new": "(시험장 당일 기재, KAIST VPN 접속)", "count": 3},
+  {"old": "시험용 PC에서 Visual Studio Code를 실행하고, Remote-SSH(‘Connect to Host’)로 아래의 접속 정보를 이용하여 시험용 서버에 원격 접속",
+   "new": "시험용 PC에서 KAIST VPN(Ivanti Secure Access)에 접속한 후, Visual Studio Code를 실행하고 Remote-SSH(‘Connect to Host’)로 아래의 접속 정보를 이용하여 시험용 서버에 원격 접속", "count": 3}
+]
