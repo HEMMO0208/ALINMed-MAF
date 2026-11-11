@@ -23,7 +23,7 @@ MSIT AI FAIR(MAF) 프레임워크에 추가할 **흉부 X선(기흉) 진단 AI�
 AI는 학습 때 **많이 본 집단은 잘, 적게 본 집단은 못** 맞히므로, ②는 (라벨 × 성별) 그룹마다 학습 사례가 비슷하게 보이도록
 적은 그룹을 **더 자주 뽑아** 학습합니다. (학습 '이전' 단계)
 
-공정성 지표 **DEO** = \|TPR_여 − TPR_남\| × 100 (원 과제 `train.py`의 `evaluate_DEO` 정의 그대로).
+공정성 지표 **DEO** = \|TPR_여 − TPR_남\| × 100 (원 과제 `train.py`의 `evaluate_DEO` 정의 그대로, TPR은 label 1 = 기흉 음성(Pneumothorax ≠ YES, 타 소견 포함) 기준).
 
 ---
 
@@ -52,6 +52,21 @@ python algorithms/preprocessing/SubgroupBalancedResampling.py --backbone resnet1
 ```
 각 실행은 ② 미적용·적용 모델을 학습하고, 전후 지표(`metrics_orig`, `metrics_transf`)와 성과지표 3종을 출력합니다.
 결과 JSON은 `performance_targets/results/`에 저장됩니다. rad-DINO 1회 약 35~40분(GPU 1장).
+
+### 학습 모델 저장 · 평가만 실행 (공인시험 방식)
+```bash
+# 학습 후 ② 적용(fair.pt)·미적용(nofair.pt) 모델 저장
+python algorithms/preprocessing/SubgroupBalancedResampling.py --save_dir checkpoints/alinmed_s42
+
+# 저장된 모델로 성과지표 3종 평가 (학습 없음, 약 25초)
+python algorithms/preprocessing/SubgroupBalancedResampling.py --ckpt_dir checkpoints/alinmed_s42
+
+# 시험항목 하나씩 평가
+python algorithms/preprocessing/SubgroupBalancedResampling.py --ckpt_dir checkpoints/alinmed_s42 --item accuracy  # 예측정확도
+python algorithms/preprocessing/SubgroupBalancedResampling.py --ckpt_dir checkpoints/alinmed_s42 --item deo       # 공정성 DEO
+python algorithms/preprocessing/SubgroupBalancedResampling.py --ckpt_dir checkpoints/alinmed_s42 --item drop      # 정책반영 성능평균하락률
+```
+평가는 결정적(deterministic)입니다. 시드 42 모델의 결과는 94.06 / 1.85 / 0.72로 3종 모두 달성입니다.
 
 ---
 
