@@ -1,0 +1,77 @@
+WARNING:root:No module named 'tensorflow': AdversarialDebiasing will be unavailable. To install, run:
+pip install 'aif360[AdversarialDebiasing]'
+WARNING:root:No module named 'tensorflow': AdversarialDebiasing will be unavailable. To install, run:
+pip install 'aif360[AdversarialDebiasing]'
+WARNING:root:No module named 'fairlearn': ExponentiatedGradientReduction will be unavailable. To install, run:
+pip install 'aif360[Reductions]'
+WARNING:root:No module named 'fairlearn': GridSearchReduction will be unavailable. To install, run:
+pip install 'aif360[Reductions]'
+WARNING:root:No module named 'inFairness': SenSeI and SenSR will be unavailable. To install, run:
+pip install 'aif360[inFairness]'
+WARNING:root:No module named 'fairlearn': GridSearchReduction will be unavailable. To install, run:
+pip install 'aif360[Reductions]'
+======================================================================
+TARGET PUSH full run: raddino_e15_strong_cw_tta_det_s1  (seed=1)
+======================================================================
+[Main] merged rows = 4376
+[Dataset] n=4376 dropped_missing=0 | label pneu(0)=238 nofind(1)=4138 | gender M(+1)=2611 F(-1)=1765
+[SPLIT] train=3938 test=438 test_pneu_pos=30 (F16/M14)
+
+----- MODEL B (WITH FAIRNESS: WeightedRandomSampler) -----
+[FAIR] WeightedRandomSampler groups(label,gender)->size: {'(1, 1)': 2224, '(1, -1)': 1506, '(0, -1)': 94, '(0, 1)': 114}
+<env>/lib/python3.10/site-packages/torch/autograd/graph.py:744: UserWarning: Plan failed with a cudnnException: CUDNN_BACKEND_EXECUTION_PLAN_DESCRIPTOR: cudnnFinalize Descriptor Failed cudnn_status: CUDNN_STATUS_NOT_SUPPORTED (Triggered internally at ../aten/src/ATen/native/cudnn/Conv_v8.cpp:919.)
+  return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+[FAIR] ep1/15 loss=0.1398 acc=0.7968 DEO=0.0600 (TPR_f=0.832 TPR_m=0.772)
+[FAIR] ep2/15 loss=0.0641 acc=0.8265 DEO=0.0877 (TPR_f=0.879 TPR_m=0.792)
+[FAIR] ep3/15 loss=0.0302 acc=0.8836 DEO=0.0296 (TPR_f=0.906 TPR_m=0.876)
+[FAIR] ep4/15 loss=0.0282 acc=0.9315 DEO=0.0138 (TPR_f=0.960 TPR_m=0.946)
+[FAIR] ep5/15 loss=0.0360 acc=0.9201 DEO=0.0015 (TPR_f=0.933 TPR_m=0.934)
+[FAIR] ep6/15 loss=0.0225 acc=0.9132 DEO=0.0101 (TPR_f=0.933 TPR_m=0.923)
+[FAIR] ep7/15 loss=0.0146 acc=0.9269 DEO=0.0349 (TPR_f=0.973 TPR_m=0.938)
+[FAIR] ep8/15 loss=0.0127 acc=0.9315 DEO=0.0017 (TPR_f=0.960 TPR_m=0.961)
+[FAIR] ep9/15 loss=0.0228 acc=0.9110 DEO=0.0274 (TPR_f=0.946 TPR_m=0.919)
+[FAIR] ep10/15 loss=0.0121 acc=0.9361 DEO=0.0065 (TPR_f=0.966 TPR_m=0.973)
+[FAIR] ep11/15 loss=0.0063 acc=0.9292 DEO=0.0205 (TPR_f=0.966 TPR_m=0.946)
+[FAIR] ep12/15 loss=0.0173 acc=0.9224 DEO=0.0138 (TPR_f=0.960 TPR_m=0.946)
+[FAIR] ep13/15 loss=0.0162 acc=0.9429 DEO=0.0079 (TPR_f=0.973 TPR_m=0.965)
+[FAIR] ep14/15 loss=0.0119 acc=0.9384 DEO=0.0002 (TPR_f=0.973 TPR_m=0.973)
+[FAIR] ep15/15 loss=0.0052 acc=0.9452 DEO=0.0075 (TPR_f=0.973 TPR_m=0.981)
+[FAIR] FINAL acc=0.9452 DEO=0.0075 TPR_f=0.973 TPR_m=0.981
+
+----- MODEL A (NO FAIRNESS: standard shuffle) -----
+[NOFAIR] standard shuffle
+[NOFAIR] ep1/15 loss=0.4715 acc=0.8950 DEO=0.0209 (TPR_f=0.913 TPR_m=0.892)
+[NOFAIR] ep2/15 loss=0.3249 acc=0.9064 DEO=0.0139 (TPR_f=0.913 TPR_m=0.927)
+[NOFAIR] ep3/15 loss=0.2927 acc=0.9384 DEO=0.0032 (TPR_f=0.953 TPR_m=0.950)
+[NOFAIR] ep4/15 loss=0.2164 acc=0.8995 DEO=0.0477 (TPR_f=0.940 TPR_m=0.892)
+[NOFAIR] ep5/15 loss=0.1657 acc=0.9041 DEO=0.0023 (TPR_f=0.913 TPR_m=0.915)
+[NOFAIR] ep6/15 loss=0.1041 acc=0.9201 DEO=0.0292 (TPR_f=0.960 TPR_m=0.931)
+[NOFAIR] ep7/15 loss=0.0889 acc=0.9384 DEO=0.0195 (TPR_f=0.973 TPR_m=0.954)
+[NOFAIR] ep8/15 loss=0.0776 acc=0.9247 DEO=0.0359 (TPR_f=0.966 TPR_m=0.931)
+[NOFAIR] ep9/15 loss=0.0896 acc=0.9406 DEO=0.0153 (TPR_f=0.973 TPR_m=0.988)
+[NOFAIR] ep10/15 loss=0.0749 acc=0.9543 DEO=0.0114 (TPR_f=0.973 TPR_m=0.985)
+[NOFAIR] ep11/15 loss=0.0328 acc=0.9543 DEO=0.0086 (TPR_f=0.980 TPR_m=0.988)
+[NOFAIR] ep12/15 loss=0.0349 acc=0.9521 DEO=0.0030 (TPR_f=0.980 TPR_m=0.977)
+[NOFAIR] ep13/15 loss=0.0347 acc=0.9543 DEO=0.0059 (TPR_f=0.987 TPR_m=0.981)
+[NOFAIR] ep14/15 loss=0.0360 acc=0.9292 DEO=0.0109 (TPR_f=0.953 TPR_m=0.942)
+[NOFAIR] ep15/15 loss=0.0819 acc=0.9498 DEO=0.0030 (TPR_f=0.980 TPR_m=0.977)
+[NOFAIR] FINAL acc=0.9498 DEO=0.0030 TPR_f=0.980 TPR_m=0.977
+
+======================================================================
+*** RESULTS (reported on FAIR model, original benchmark definitions) ***
+accuracy(fair)   = 94.52%   accuracy(nofair) = 94.98%
+DEO(fair)        = 0.75%   (TPR_f=0.973 TPR_m=0.981)
+policy-drop      = 0.48%
+TARGET CHECK: acc>=94? True (94.52) | DEO<=5? True (0.75) | drop<=3? True (0.48)  => PASS
+======================================================================
+[logged] {"round": 40, "round_id": 40, "arch": "raddino (target-push)", "variant": "raddino_e15_strong", "acc": 0.9452, "deo": 0.0075, "tpr_f": 0.973, "tpr_m": 0.981, "notes": "R40 target-push on ORIGINAL Four-Findings merge(4376)/image-level split (train3938/test438, test_pneu_pos=30 F16/M14); recipe: backbone=raddino epochs=15 aug=strong fix_classweight=True tta=True lr=2e-05 bs=16 seed=1. TARGETS: acc>=94% -> 94.52% [PASS]; DEO<=5% -> 0.75% [PASS]; policy-drop<=3% -> 0.48% [PASS]; acc_nofair=94.98%. OVERALL=PASS. Baseline committed: acc93.38/DEO2.03/drop0.25. DEO def = train.py evaluate_DEO (TPR on label==1)."}
+[saved] performance_targets/results/target_push_raddino_e15_strong_cw_tta_det_s1.json
+
+metric                            BEFORE(baseline)          AFTER(②)
+accuracy                                    0.9498            0.9452
+Balanced accuracy                           0.7723            0.7390
+true_positive_rate                          0.9779            0.9779
+equal_opportunity_difference                0.0030           -0.0075
+average_abs_odds_difference                 0.0640            0.0038
+
+[targets] accuracy 94.52% (>=94) | DEO 0.75% (<=5) | policy drop 0.48% (<=3)

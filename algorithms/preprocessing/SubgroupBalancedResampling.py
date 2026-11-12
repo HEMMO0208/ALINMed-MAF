@@ -20,7 +20,7 @@ DEO = |TPR_F - TPR_M| on label 1. favorable label = 1, protected = sex (1 = M, 0
 
 Run
 ---
-  python algorithms/preprocessing/SubgroupBalancedResampling.py                       # rad-DINO, seed 42
+  python algorithms/preprocessing/SubgroupBalancedResampling.py                       # rad-DINO, seed 3
   python algorithms/preprocessing/SubgroupBalancedResampling.py --seed 1              # other seed
   python algorithms/preprocessing/SubgroupBalancedResampling.py --backbone resnet18   # ResNet-18 baseline
 """
@@ -67,7 +67,7 @@ class aifData(StandardDataset):
 
 
 class Subgroup_Balanced_Resampling:
-    def __init__(self, backbone: str = 'raddino', seed: int = 42) -> None:
+    def __init__(self, backbone: str = 'raddino', seed: int = 3) -> None:
         self.backbone = backbone
         self.seed = seed
         self.args = target_push.build_argparser().parse_args([])
@@ -108,10 +108,13 @@ class Subgroup_Balanced_Resampling:
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument('--backbone', default='raddino', choices=list(RECIPES))
-    ap.add_argument('--seed', type=int, default=42)
+    ap.add_argument('--seed', type=int, default=3)
+    ap.add_argument('--nondeterministic', action='store_true',
+                    help='turn off the deterministic mode (default on: identical runs for the same seed)')
     a = ap.parse_args()
 
     clf = Subgroup_Balanced_Resampling(backbone=a.backbone, seed=a.seed)
+    clf.args.nondeterministic = a.nondeterministic
     m_orig, m_transf = clf.run()
     keys = ["accuracy", "Balanced accuracy", "true_positive_rate",
             "equal_opportunity_difference", "average_abs_odds_difference"]

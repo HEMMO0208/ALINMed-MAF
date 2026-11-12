@@ -29,12 +29,17 @@ AI는 학습 때 **많이 본 집단은 잘, 적게 본 집단은 못** 맞히�
 
 ## 결과 — Four-Findings 테스트 438장
 
-| 모델 | 예측정확도 (≥ 94%) | 공정성 DEO (≤ 5%) | 정책반영 성능평균하락률 (≤ 3%) | 판정 |
-|---|---|---|---|---|
-| ResNet-18 (baseline, 시드 42) | 90.41 ❌ | 3.51 | 0.25 | 미달 |
-| **rad-DINO + ② (학습 시드 5개 평균)** | **94.34** ✅ | **1.42** ✅ | **−0.25** ✅ | **3종 달성** |
+rad-DINO, 학습 시드 1·2·3·4 평균. 「② 미적용」은 같은 모델을 일반 셔플로 학습한 것, 「② 적용」은 그룹 균형 리샘플링으로 학습한 것입니다.
 
-- 정책반영 하락률 = 같은 backbone에서 ② 미적용 모델 대비 정확도 하락률(음수 = ② 적용 모델이 더 정확).
+| 성과지표 (목표) | ② 미적용 | ② 적용 | 판정 |
+|---|---|---|---|
+| 예측정확도 (≥ 94%) | 95.09 | **95.32** | ✅ |
+| 공정성 DEO (≤ 5%) | 0.80 | **0.64** | ✅ |
+| 정책반영 성능평균하락률 (≤ 3%) | — | **−0.24** | ✅ |
+
+- 정책반영 성능평균하락률 = (정확도_미적용 − 정확도_적용) / 정확도_미적용 × 100. 음수는 ② 적용 모델이 더 정확하다는 뜻입니다.
+- DEO는 낮을수록 공정합니다. ② 적용으로 평균 0.80 → 0.64로 낮아졌습니다.
+- 모든 수치는 결정적(deterministic) 모드로 측정했습니다. 같은 환경에서 같은 명령을 다시 실행하면 같은 값이 나옵니다(아래 「재현성」).
 - 시드별 결과와 레시피는 `performance_targets/README.md`.
 
 ---
@@ -46,12 +51,11 @@ AI는 학습 때 **많이 본 집단은 잘, 적게 본 집단은 못** 맞히�
 pip install -r requirements.txt
 python performance_targets/download_nih_subset.py     # Four-Findings 영상 4,376장 (이미 있으면 NIH_ROOT=<경로>)
 
-python algorithms/preprocessing/SubgroupBalancedResampling.py                       # rad-DINO + ②, 시드 42
-python algorithms/preprocessing/SubgroupBalancedResampling.py --seed 1              # 다른 학습 시드 (1, 2, 3, 4)
-python algorithms/preprocessing/SubgroupBalancedResampling.py --backbone resnet18   # ResNet-18 baseline
+python algorithms/preprocessing/SubgroupBalancedResampling.py                       # rad-DINO + ②, 시드 3 (기본값)
+python algorithms/preprocessing/SubgroupBalancedResampling.py --seed 1              # 다른 학습 시드 (1, 2, 4)
 ```
 각 실행은 ② 미적용·적용 모델을 학습하고, 전후 지표(`metrics_orig`, `metrics_transf`)와 성과지표 3종을 출력합니다.
-결과 JSON은 `performance_targets/results/`에 저장됩니다. rad-DINO 1회 약 35~40분(GPU 1장).
+결과 JSON은 `performance_targets/results/`에 저장됩니다. 1회 약 39분(GPU 1장).
 
 ---
 
@@ -69,6 +73,13 @@ python algorithms/preprocessing/SubgroupBalancedResampling.py --backbone resnet1
 ## 재현성
 - 버전: `environment.txt` (torch 2.3.0+cu121, transformers 4.44.2, scikit-learn 1.7.2, numpy 2.2.6, aif360 0.6.1, Pillow 12.3.0),
   rad-DINO revision `110cbc18d5133582e320b43d53bf5c44e410c936` (코드에 고정).
+- **결정적 모드(기본 적용)**: 난수 시드 고정에 더해 cuDNN 결정적 연산, `torch.use_deterministic_algorithms(True)`,
+  `CUBLAS_WORKSPACE_CONFIG=:4096:8`, DataLoader·샘플러 난수 생성기 고정을 적용합니다. 별도 설정 없이 위 명령만 실행하면 됩니다.
+  같은 시드·같은 명령으로 반복 실행했을 때 결과 JSON과 로그가 완전히 일치함을 확인했습니다(시드 3, 2회).
+- **일치 조건**: 같은 GPU 모델과 같은 라이브러리 버전(`environment.txt`)에서 반복 실행 결과가 같습니다.
+  GPU 모델, CUDA/cuDNN, PyTorch 버전이 다르면 부동소수점 연산 순서가 달라져 수치가 조금 다를 수 있습니다
+  (테스트 438장이라 1장 = 0.23%p). 그 경우에도 그 환경 안에서는 매번 같은 값이 나옵니다.
+- `--nondeterministic`을 붙이면 결정적 모드를 끄고 이전 방식으로 실행합니다(실행마다 결과가 달라질 수 있음).
 
 ## MAF 통합 / 대상 버전
 - 첨부받은 **MAF2024_guide** 양식 기준이며 `metrics/common_utils.py`를 자체 포함해 독립 실행됩니다.

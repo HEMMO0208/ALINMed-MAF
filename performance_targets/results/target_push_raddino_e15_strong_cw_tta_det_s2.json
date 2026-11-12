@@ -1,6 +1,6 @@
 {
   "round": 40,
-  "tag": "raddino_e15_strong_cw_tta_s42",
+  "tag": "raddino_e15_strong_cw_tta_det_s2",
   "variant": "raddino_e15_strong",
   "config": {
     "backbone": "raddino",
@@ -8,29 +8,30 @@
     "aug": "strong",
     "fix_classweight": true,
     "tta": true,
-    "seed": 42,
+    "seed": 2,
     "lr": 2e-05,
     "batch_size": 16,
     "num_workers": 4,
-    "smoke": false
+    "smoke": false,
+    "nondeterministic": false
   },
-  "acc_fair": 0.9452054794520548,
-  "acc_nofair": 0.9474885844748858,
-  "deo_fair_pct": 0.40423933041383586,
-  "policy_drop_pct": 0.24096385542168383,
+  "acc_fair": 0.952054794520548,
+  "acc_nofair": 0.958904109589041,
+  "deo_fair_pct": 1.1401622139877166,
+  "policy_drop_pct": 0.7142857142857056,
   "tpr_f_fair": 0.9731543624161074,
-  "tpr_m_fair": 0.9691119691119691,
+  "tpr_m_fair": 0.9845559845559846,
   "fair": {
-    "acc": 0.9452054794520548,
-    "deo": 0.004042393304138359,
+    "acc": 0.952054794520548,
+    "deo": 0.011401622139877166,
     "tpr_f": 0.9731543624161074,
-    "tpr_m": 0.9691119691119691
+    "tpr_m": 0.9845559845559846
   },
   "nofair": {
-    "acc": 0.9474885844748858,
-    "deo": 0.005882200513072977,
+    "acc": 0.958904109589041,
+    "deo": 0.009561814930942436,
     "tpr_f": 0.9865771812080537,
-    "tpr_m": 0.9806949806949807
+    "tpr_m": 0.9961389961389961
   },
   "targets": {
     "acc": 94.0,
